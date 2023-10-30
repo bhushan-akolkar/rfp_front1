@@ -141,7 +141,7 @@ const ChatUI = () => {
       for (const [key, value] of formData.entries()) {
         console.log(`${key}: ${value}`);
       }
-        const response = await fetch('https://b43f-103-181-14-151.ngrok-free.app/doc_analyser/dockstack/upload_doc', {
+        const response = await fetch('/upload_doc', {
           method: 'POST',
           body: formData,
         });
@@ -165,7 +165,8 @@ const ChatUI = () => {
     const handleShowSimilarDocument = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('https://your-api-endpoint.com/similar_documents');
+        const response = await fetch('/doc_analyser/docstack/checkpoints');
+        console.log('Response Data in API:', response);
         if (response.ok) {
           const data = await response.json();
           setIsLoading(false);
@@ -190,7 +191,7 @@ const ChatUI = () => {
     );
     useEffect(() => {
       
-      const apiUrl = 'https://your-api-endpoint.com/get_folders';
+      const apiUrl = '/doc_analyser/docstack/list';
       fetch(apiUrl)
         .then((response) => response.json())
         .then((data) => {
@@ -203,8 +204,9 @@ const ChatUI = () => {
 
     const handleFolderClick = async (folderName) => {
       try {
-        
-        const response = await fetch('https://your-api-endpoint.com/send_folder', {
+        setIsDocumentUploadVisible(false);
+        setIsLoading(true);
+        const response = await fetch('/get_document_name', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -214,7 +216,7 @@ const ChatUI = () => {
   
         if (response.ok) {
           
-          const secondApiResponse = await fetch('https://your-api-endpoint.com/second_api', {
+          const secondApiResponse = await fetch('/doc_analyser/checkpoints', {
             method: 'GET',
           });
     
@@ -231,6 +233,9 @@ const ChatUI = () => {
         }
       } catch (error) {
         console.error('Error handling folder click:', error);
+      }
+      finally {
+        setIsLoading(false); 
       }
     };
   
@@ -285,7 +290,7 @@ const ChatUI = () => {
         />
           
         </div>
-          {folderList.map((folder, index) => (
+          {filteredFolderList.map((folder, index) => (
           <div
             key={index}
             className="folder-item"
@@ -378,33 +383,62 @@ const ChatUI = () => {
           </button>
         </div>
  ) : null}
+ {isLoading ? (
+          <div className="loading-message">Generating Response...</div>
+        ) : (
 
 <div className="api-response">
-          {responseData && responseData.checklist && responseData.checklist.length > 0 ? (
-          responseData.similar_documents.map((doc, index) => (
+          {responseData && responseData.Checklist && responseData.Checklist.length > 0 ? (
+          responseData.Checklist.map((doc, index) => (
           <div key={index} className="response-item">
-          <h3>Document Name</h3>
-          <div>{doc['Document Name']}</div>
+          <h3>Question</h3>
+            <div>{doc['Question']}</div>
 
-          <h3>Summary</h3>
-          <div>{doc['Summary']}</div>
+            <h3>Answer</h3> 
+            <div>{doc['Answer']}</div>
 
-          <h3>Links</h3>
+            {doc['link'] && doc['link'].length > 0 && (
+  <div>
+    <h3>Document Links</h3>
+    {doc['link'].map((link, linkIndex) => (
+      <div key={linkIndex}>
+        <a
+          href={`${link}?page=2`}
+          target="_blank"
+          onClick={(e) => {
+            e.preventDefault();
+            const width = 900;
+            const height = 500;
+            const left = window.screen.width / 2 - width / 2;
+            const top = window.screen.height / 2 - height / 2;
+            window.open(link, '', `width=${width},height=${height},top=${top},left=${left}`);
+          }}
+        >
+          {link.split('/')[link.split('/').length - 1]}
+        </a>
+        <br /> 
+      </div>
+    ))}
+  </div>
+)}
+
+          {/* <h3>Links</h3>
           <div>
           {doc.link.map((link, linkIndex) => (
           <a key={linkIndex} href={link} target="_blank" rel="noopener noreferrer">
           Link {linkIndex + 1}
           </a>
           ))}
-          </div>
+          </div> */}
 
           <hr />
           </div>
           ))
           ) : (
-          <div className="no-response">No response available</div>
+          <div className="no-response"></div>
           )}
           </div>
+           )}
         {uploadedDocuments.length > 0 && (
   <div className="uploaded-documents">
     <div className="uploaded-document-title">Uploaded Documents:</div>
